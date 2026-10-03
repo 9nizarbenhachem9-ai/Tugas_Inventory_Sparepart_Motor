@@ -29,6 +29,27 @@
             box-sizing: border-box;
         }
 
+        .login-container {
+            max-width: 400px;
+            margin: 80px auto;
+            border: 1px solid #ccc;
+            padding: 25px;
+            border-radius: 8px;
+        }
+
+        .login-error {
+            color: #b00020;
+            margin-top: 10px;
+        }
+
+        #appContainer {
+            display: none;
+        }
+
+        .logout {
+            float: right;
+        }
+
         .container {
             max-width: 1100px;
             margin: auto;
@@ -88,9 +109,27 @@
 
 <body>
 
+<div id="loginContainer" class="login-container">
+    <h1>Login</h1>
+    <form id="loginForm">
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="loginUsername" required>
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="loginPassword" required>
+        </div>
+        <button type="submit">Login</button>
+        <div id="loginError" class="login-error"></div>
+    </form>
+</div>
+
+<div id="appContainer">
 <div class="container">
 
     <h1>Inventory Sparepart Motor</h1>
+    <button class="logout" onclick="logout()">Logout</button>
 
     <button onclick="bukaFormTambah()">
         + Tambah Barang
@@ -292,9 +331,69 @@
     </table>
 
 </div>
-
+</div>
 
 <script>
+
+const LOGIN_URL = "/api/login";
+const SESSION_KEY = "inventoryLogin";
+
+async function login(event) {
+    event.preventDefault();
+
+    const username = document.getElementById("loginUsername").value.trim();
+    const password = document.getElementById("loginPassword").value;
+    const errorElement = document.getElementById("loginError");
+
+    errorElement.textContent = "";
+
+    try {
+        const response = await fetch(LOGIN_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                username: username,
+                password: password
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            errorElement.textContent = result.message || "Login gagal";
+            return;
+        }
+
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+            user_id: result.user_id,
+            username: result.username
+        }));
+
+        tampilkanAplikasi();
+
+    } catch (error) {
+        console.error(error);
+        errorElement.textContent = "Tidak dapat menghubungi API";
+    }
+}
+
+function tampilkanAplikasi() {
+    document.getElementById("loginContainer").style.display = "none";
+    document.getElementById("appContainer").style.display = "block";
+    ambilData();
+}
+
+function logout() {
+    sessionStorage.removeItem(SESSION_KEY);
+    document.getElementById("appContainer").style.display = "none";
+    document.getElementById("loginContainer").style.display = "block";
+    document.getElementById("loginForm").reset();
+    document.getElementById("loginError").textContent = "";
+}
+
+document.getElementById("loginForm").addEventListener("submit", login);
 
 const API_URL = "/api/sparepart";
 
@@ -774,7 +873,11 @@ function cariBarang() {
 // JALANKAN SAAT HALAMAN DIBUKA
 // ===============================
 
-ambilData();
+if (sessionStorage.getItem(SESSION_KEY)) {
+    tampilkanAplikasi();
+} else {
+    document.getElementById("loginContainer").style.display = "block";
+}
 
 </script>
 

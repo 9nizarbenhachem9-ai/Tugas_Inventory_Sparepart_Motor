@@ -49,6 +49,7 @@ func main() {
 		fmt.Println("1. Tampilkan Semua Barang")
 		fmt.Println("2. Tambah Barang")
 		fmt.Println("3. Cari Barang")
+		fmt.Println("4. Login")
 		fmt.Println("0. Keluar")
 		fmt.Println("======================================")
 
@@ -88,6 +89,11 @@ func main() {
 
 			// Menu pencarian barang
 			cariBarang(reader, spareparts, stok, harga, lokasi, suppliers)
+
+		case "4":
+
+			// Menu login
+			credentialCheck()
 
 		case "0":
 

@@ -8,6 +8,85 @@ import (
 )
 
 // ============================================================
+// LOGIN
+// ============================================================
+
+type Credentials struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type AuthUser struct {
+	ID          string      `json:"id"`
+	Credentials Credentials `json:"credentials"`
+}
+
+var users = []AuthUser{
+	{
+		ID: "USR-001",
+		Credentials: Credentials{
+			Username: "admin",
+			Password: "admin123",
+		},
+	},
+	{
+		ID: "USR-002",
+		Credentials: Credentials{
+			Username: "kasir01",
+			Password: "kasir123",
+		},
+	},
+	{
+		ID: "USR-003",
+		Credentials: Credentials{
+			Username: "user01",
+			Password: "user123",
+		},
+	},
+}
+
+func login(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	var request Credentials
+
+	err := json.NewDecoder(r.Body).Decode(&request)
+
+	if err != nil {
+		http.Error(
+			w,
+			"JSON tidak valid",
+			http.StatusBadRequest,
+		)
+		return
+	}
+
+	for _, user := range users {
+
+		if user.Credentials.Username == request.Username &&
+			user.Credentials.Password == request.Password {
+
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success":  true,
+				"message":  "Login berhasil",
+				"user_id":  user.ID,
+				"username": user.Credentials.Username,
+			})
+
+			return
+		}
+	}
+
+	w.WriteHeader(http.StatusUnauthorized)
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": false,
+		"message": "Username atau password salah",
+	})
+}
+
+// ============================================================
 // GET - MENAMPILKAN SEMUA SPAREPART
 // ============================================================
 
@@ -437,6 +516,24 @@ func simpanSemuaData() error {
 func startAPI() {
 
 	mux := http.NewServeMux()
+
+	// ============================================================
+	// LOGIN
+	// ============================================================
+
+	mux.HandleFunc("/api/login", func(w http.ResponseWriter, r *http.Request) {
+
+		if r.Method != http.MethodPost {
+			http.Error(
+				w,
+				"Method tidak didukung",
+				http.StatusMethodNotAllowed,
+			)
+			return
+		}
+
+		login(w, r)
+	})
 
 	// ============================================================
 	// GET SEMUA SPAREPART
